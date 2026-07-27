@@ -68,18 +68,20 @@ export function getUpcomingEvents() {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  return events.filter((event) => {
-    if (event.status !== "upcoming") return false;
+  return events
+    .filter((event) => {
+      if (event.status !== "upcoming") return false;
 
-    const eventEnd = getEventEndDate(event);
-    eventEnd.setHours(23, 59, 59, 999);
+      const eventEnd = getEventEndDate(event);
+      eventEnd.setHours(23, 59, 59, 999);
 
-    return eventEnd >= today;
-  });
+      return eventEnd >= today;
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export function getCompletedEvents() {
-  return events.filter((e) => e.status === "completed");
+  return events.filter((e) => e.status === "completed").sort((a, b) => b.date.localeCompare(a.date));
 }
 
 export function formatEventDate(date: string, endDate?: string) {

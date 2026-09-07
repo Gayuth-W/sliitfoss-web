@@ -22,28 +22,50 @@ const renderInline = (text: string) => {
   });
 };
 
-const renderContent = (content: string) =>
-  content
-    .split("\n")
-    .map((line) => line.trimEnd())
-    .reduce<{ blocks: string[][]; current: string[] }>(
-      (acc, line) => {
-        if (line === "") {
-          if (acc.current.length) {
-            acc.blocks.push(acc.current);
-            acc.current = [];
-          }
-          return acc;
-        }
-        acc.current.push(line);
-        return acc;
-      },
-      { blocks: [], current: [] }
-    );
+const renderContent = (content: string) => {
+  const lines = content.split("\n").map((line) => line.trimEnd());
+  const blocks: { type: "text" | "code"; lines: string[]; lang?: string }[] = [];
+  let current: string[] = [];
+  let inCode = false;
+  let codeLang = "";
+  let codeLines: string[] = [];
+
+  const flushText = () => {
+    if (current.length) {
+      blocks.push({ type: "text", lines: current });
+      current = [];
+    }
+  };
+
+  for (const line of lines) {
+    if (line.trim().startsWith("```")) {
+      if (!inCode) {
+        flushText();
+        inCode = true;
+        codeLang = line.trim().slice(3).trim();
+        codeLines = [];
+      } else {
+        blocks.push({ type: "code", lines: codeLines, lang: codeLang });
+        inCode = false;
+      }
+      continue;
+    }
+    if (inCode) {
+      codeLines.push(line);
+      continue;
+    }
+    if (line === "") {
+      flushText();
+      continue;
+    }
+    current.push(line);
+  }
+  flushText();
+  return blocks;
+};
 
 export function BlogPostView({ post }: { post: BlogPost }) {
-  const { blocks, current } = renderContent(post.content);
-  if (current.length) blocks.push(current);
+  const blocks = renderContent(post.content);
 
   return (
     <>
@@ -78,7 +100,16 @@ export function BlogPostView({ post }: { post: BlogPost }) {
 
           <FadeUp delay={0.1}>
             <article className="space-y-6 text-[#333] leading-relaxed">
-              {blocks.map((block, i) => {
+              {blocks.map((b, i) => {
+                if (b.type === "code") {
+                  return (
+                    <pre key={i} className="bg-[#111] text-[#e5e5e5] text-sm rounded-lg p-4 overflow-x-auto">
+                      <code>{b.lines.join("\n")}</code>
+                    </pre>
+                  );
+                }
+
+                const block = b.lines;
                 const first = block[0];
                 if (first.startsWith("## ")) {
                   return (

@@ -5,6 +5,23 @@ import { BlogPost, formatBlogDate } from "@/content/blog";
 import { WordAnimate } from "@/components/animations/word-animate";
 import { FadeUp } from "@/components/animations/fade-up";
 
+const renderInline = (text: string) => {
+  const parts = text.split(/(\*\*[^*]+\*\*|`[^`]+`)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("`") && part.endsWith("`")) {
+      return (
+        <code key={i} className="bg-black/5 px-1.5 py-0.5 rounded text-[0.85em]">
+          {part.slice(1, -1)}
+        </code>
+      );
+    }
+    return part;
+  });
+};
+
 const renderContent = (content: string) =>
   content
     .split("\n")
@@ -66,14 +83,14 @@ export function BlogPostView({ post }: { post: BlogPost }) {
                 if (first.startsWith("## ")) {
                   return (
                     <h2 key={i} className="font-heading text-2xl font-semibold text-[#111] mt-8">
-                      {first.slice(3)}
+                      {renderInline(first.slice(3))}
                     </h2>
                   );
                 }
                 if (first.startsWith("### ")) {
                   return (
                     <h3 key={i} className="font-heading text-xl font-semibold text-[#111] mt-6">
-                      {first.slice(4)}
+                      {renderInline(first.slice(4))}
                     </h3>
                   );
                 }
@@ -81,7 +98,7 @@ export function BlogPostView({ post }: { post: BlogPost }) {
                   return (
                     <ol key={i} className="list-decimal pl-6 space-y-2 text-sm">
                       {block.map((line, j) => (
-                        <li key={j}>{line.replace(/^\d+\.\s/, "")}</li>
+                        <li key={j}>{renderInline(line.replace(/^\d+\.\s/, ""))}</li>
                       ))}
                     </ol>
                   );
@@ -90,14 +107,14 @@ export function BlogPostView({ post }: { post: BlogPost }) {
                   return (
                     <ul key={i} className="list-disc pl-6 space-y-2 text-sm">
                       {block.map((line, j) => (
-                        <li key={j}>{line.slice(2)}</li>
+                        <li key={j}>{renderInline(line.slice(2))}</li>
                       ))}
                     </ul>
                   );
                 }
                 return (
                   <p key={i} className="text-sm">
-                    {block.join(" ")}
+                    {renderInline(block.join(" "))}
                   </p>
                 );
               })}
